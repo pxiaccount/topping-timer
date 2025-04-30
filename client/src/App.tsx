@@ -15,7 +15,6 @@ interface TodoItem {
 }
 
 function App() {
-  // Timer states
   const [time, setTime] = useState({
     hours: '00',
     minutes: '00',
@@ -25,14 +24,31 @@ function App() {
   const [isFinished, setIsFinished] = useState(false)
   const intervalRef = useRef<number | null>(null)
 
-  // Todo states
   const [text, setText] = useState("")
-  const [data, setData] = useState<TodoItem[]>([])
+  const [data, setData] = useState<TodoItem[]>(() => {
+    const savedTodos = localStorage.getItem('todos')
+    if (savedTodos) {
+      try {
+        const parsedTodos = JSON.parse(savedTodos)
+        return parsedTodos.map((todo: TodoItem) => ({
+          ...todo,
+          timer: todo.timer || {
+            hours: '00',
+            minutes: '00',
+            seconds: '00'
+          }
+        }))
+      } catch (error) {
+        console.error('Error loading todos:', error)
+        localStorage.removeItem('todos')
+        return []
+      }
+    }
+    return []
+  })
   const [popup, setPopup] = useState<number | null>(null)
-  const [descNum, setDescNum] = useState<number | null>(null)
   const [date, setDate] = useState("")
   const [desc, setDesc] = useState("")
-  const [query, setQuery] = useState("")
 
   useEffect(() => {
     if (isFinished) {
@@ -51,6 +67,14 @@ function App() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [popup]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('todos', JSON.stringify(data))
+    } catch (error) {
+      console.error('Error saving todos:', error)
+    }
+  }, [data])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -224,7 +248,7 @@ function App() {
           </div>
 
           <ul className="space-y-4">
-            {data.filter(item => item.content.includes(query)).map((item) => (
+            {data.filter(item => item.content).map((item) => (
               <li key={item.id} className="bg-white-700 p-4 rounded-lg flex items-center relative"> {/* Add relative positioning */}
                 <input
                   type="checkbox"

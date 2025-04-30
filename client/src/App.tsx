@@ -1,20 +1,70 @@
 import { useState, useRef, useEffect } from 'react'
 import './App.css'
 
-interface TodoItem {
-  content: string;
+interface Sticker {
   id: number;
+  type: string;
+  x: number;
+  y: number;
+}
+
+interface StickerMenuProps {
+  onAddSticker: (type: string) => void;
+  stickerTypes: readonly string[];
+}
+
+interface TodoItem {
+  id: number;
+  content: string;
   due: string;
   description: string;
   checked: boolean;
-  timer?: {
+  timer: {
     hours: string;
     minutes: string;
     seconds: string;
   };
 }
 
+const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes }) => {
+  return (
+    <div className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white-800 p-4 flex flex-col gap-2">
+      {stickerTypes.map(type => (
+        <button
+          key={type}
+          onClick={() => onAddSticker(type)}
+          className="w-12 h-12 hover:opacity-80"
+        >
+          <img
+            src={`/stickers/${type}`}
+            alt={type}
+            className="w-full h-full object-contain"
+            draggable={false}
+          />
+        </button>
+      ))}
+    </div>
+  )
+}
+
 function App() {
+  const [stickers, setStickers] = useState<Sticker[]>(() => {
+    const saved = localStorage.getItem('stickers')
+    return saved ? JSON.parse(saved) : []
+  })
+  const [isDragging, setIsDragging] = useState(false)
+  const dragRef = useRef<{ id: number | null; startX: number; startY: number }>({
+    id: null,
+    startX: 0,
+    startY: 0
+  })
+
+  const STICKER_TYPES = [
+    'star.png',
+    'heart.png',
+    'smile.png',
+  ] as const
+
   const [time, setTime] = useState({
     hours: '00',
     minutes: '00',
@@ -75,6 +125,10 @@ function App() {
       console.error('Error saving todos:', error)
     }
   }, [data])
+
+  useEffect(() => {
+    localStorage.setItem('stickers', JSON.stringify(stickers))
+  }, [stickers])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -153,7 +207,7 @@ function App() {
           due: date,
           description: desc,
           checked: false,
-          timer: time // Add current timer settings to todo item
+          timer: time
         },
       ])
     }
@@ -172,15 +226,64 @@ function App() {
   }
 
   const showPopup = (id: number) => {
-    setPopup(popup === id ? null : id);  // Toggle popup
+    setPopup(popup === id ? null : id);
+  }
+
+  const handleStickerDragStart = (e: React.MouseEvent, id: number) => {
+    e.preventDefault()
+    setIsDragging(true)
+    const sticker = stickers.find(s => s.id === id)
+    if (!sticker) return
+
+    dragRef.current = {
+      id,
+      startX: e.clientX - sticker.x,
+      startY: e.clientY - sticker.y
+    }
+  }
+
+  const handleStickerDrag = (e: React.MouseEvent) => {
+    if (!isDragging || dragRef.current.id === null) return
+
+    setStickers(prev => prev.map(sticker => {
+      if (sticker.id === dragRef.current.id) {
+        return {
+          ...sticker,
+          x: e.clientX - dragRef.current.startX,
+          y: e.clientY - dragRef.current.startY
+        }
+      }
+      return sticker
+    }))
+  }
+
+  const handleStickerDragEnd = () => {
+    setIsDragging(false)
+    dragRef.current.id = null
+  }
+
+  const addSticker = (type: string) => {
+    setStickers(prev => [...prev, {
+      id: Date.now(),
+      type,
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2
+    }])
+  }
+
+  const deleteSticker = (id: number) => {
+    setStickers(prev => prev.filter(sticker => sticker.id !== id))
   }
 
   return (
-    <div className="min-h-screen bg-white-900">
-      {/* Timer Section */}
+    <div
+      className="min-h-screen bg-white-900 relative"
+      onMouseMove={handleStickerDrag}
+      onMouseUp={handleStickerDragEnd}
+    >
       <div className='text-center text-6xl py-10 font-bold'>Topping Timer!</div>
       <div className="max-w-4xl mx-auto p-4">
-        <div className="bg-white-800 p-8 mb-8"> {/* Removed shadow-xl and rounded-lg */}
+        <div className="bg-white-800 p-8 mb-8">
           <div className='flex flex-row justify-center items-center'>
             <input
               type="number"
@@ -229,8 +332,7 @@ function App() {
           </div>
         </div>
 
-        {/* Todo Section */}
-        <div className="bg-white-800 p-8"> {/* Removed shadow-xl and rounded-lg */}
+        <div className="bg-white-800 p-8">
           <div className="flex justify-between mb-4">
             <input
               className="bg-white-700  px-4 py-2 rounded-lg flex-1 mr-4"
@@ -249,7 +351,7 @@ function App() {
 
           <ul className="space-y-4">
             {data.filter(item => item.content).map((item) => (
-              <li key={item.id} className="bg-white-700 p-4 rounded-lg flex items-center relative"> {/* Add relative positioning */}
+              <li key={item.id} className="bg-white-700 p-4 rounded-lg flex items-center relative">
                 <input
                   type="checkbox"
                   checked={item.checked}
@@ -269,7 +371,7 @@ function App() {
                 </button>
 
                 {popup === item.id && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white z-10 popup-menu"> {/* Removed shadow-lg, rounded-md, and ring styles */}
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white z-10 popup-menu">
                     <div className="py-1">
                       <button
                         className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -288,6 +390,40 @@ function App() {
           </ul>
         </div>
       </div>
+
+      <StickerMenu onAddSticker={addSticker} stickerTypes={STICKER_TYPES} />
+
+      {stickers.map(sticker => (
+        <div
+          key={sticker.id}
+          className="absolute cursor-move group"
+          style={{
+            left: `${sticker.x}px`,
+            top: `${sticker.y}px`,
+            transform: 'translate(-50%, -50%)',
+            zIndex: isDragging && dragRef.current.id === sticker.id ? 1000 : 1
+          }}
+          onMouseDown={(e) => handleStickerDragStart(e, sticker.id)}
+        >
+          <img
+            src={`/stickers/${sticker.type}`}
+            alt="sticker"
+            className="w-12 h-12 select-none"
+            draggable={false}
+          />
+          <button
+            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 
+                       flex items-center justify-center text-xs 
+                       opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              deleteSticker(sticker.id);
+            }}
+          >
+            ×
+          </button>
+        </div>
+      ))}
     </div>
   )
 }

@@ -589,7 +589,7 @@ function App() {
           >
             <div className="relative border-2 border-transparent hover:border-gray-500 transition-colors">
               <Image
-                src={sticker.type.startsWith('data:') ? sticker.type : `${getBasePath()}/stickers/${sticker.type}`}
+                src={sticker.type.startsWith('data:') ? sticker.type : `${getBasePath()}/stickers/${sticker.type}`} // Add basePath here
                 alt="sticker"
                 width={sticker.size}
                 height={sticker.size}

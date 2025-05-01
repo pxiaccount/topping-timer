@@ -1,5 +1,6 @@
 "use client"
 import { useState, useRef, useEffect } from 'react'
+import Image from 'next/image'
 import './globals.css'
 
 interface Sticker {
@@ -38,17 +39,32 @@ const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes, o
           onClick={() => onAddSticker(type)}
           className="w-12 h-12 hover:opacity-80"
         >
-          <img
+          <Image
             src={`/stickers/${type}`}
             alt={type}
-            className="w-full h-full object-contain"
-            draggable={false}
+            width={48}
+            height={48}
+            priority={false}
           />
         </button>
       ))}
+      <label className="cursor-pointer w-12 h-12 flex items-center justify-center border-2 border-dashed border-gray-400 rounded hover:border-gray-600">
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              onImageUpload(file);
+            }
+          }}
+        />
+        <span className="text-2xl">+</span>
+      </label>
     </div>
-  )
-}
+  );
+};
 
 function App() {
   const [stickers, setStickers] = useState<Sticker[]>([]) // Initialize empty first
@@ -270,7 +286,6 @@ function App() {
     setText("")
     setDate("")
     setDesc("")
-    resetTimer()
   }
 
   const handleCheck = (id: number) => {
@@ -537,15 +552,12 @@ function App() {
             onMouseDown={(e) => handleStickerDragStart(e, sticker.id)}
           >
             <div className="relative border-2 border-transparent hover:border-gray-500 transition-colors">
-              <img
+              <Image
                 src={sticker.type.startsWith('data:') ? sticker.type : `/stickers/${sticker.type}`}
                 alt="sticker"
-                className="select-none object-contain"
-                style={{
-                  width: `${sticker.size}px`,
-                  height: `${sticker.size}px`
-                }}
-                draggable={false}
+                width={sticker.size}
+                height={sticker.size}
+                priority={false}
               />
               <button
                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 

@@ -40,7 +40,7 @@ const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes, o
           className="w-12 h-12 hover:opacity-80"
         >
           <Image
-            src={`${process.env.NODE_ENV === 'production' ? '/topping-timer' : ''}/stickers/${type}`}
+            src={`/stickers/${type}`}
             alt={type}
             width={48}
             height={48}
@@ -67,13 +67,13 @@ const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes, o
 };
 
 function App() {
-  const [stickers, setStickers] = useState<Sticker[]>([])
-  const [data, setData] = useState<TodoItem[]>([])
+  const [stickers, setStickers] = useState<Sticker[]>([]) // Initialize empty first
+  const [data, setData] = useState<TodoItem[]>([]) // Initialize empty first
   const [customColor, setCustomColor] = useState("#ffffff")
 
-
+  // Add this useEffect to load data after component mounts
   useEffect(() => {
-
+    // Load stickers
     const savedStickers = localStorage.getItem('stickers')
     if (savedStickers) {
       try {
@@ -83,7 +83,7 @@ function App() {
       }
     }
 
-
+    // Load todos
     const savedTodos = localStorage.getItem('todos')
     if (savedTodos) {
       try {
@@ -101,12 +101,12 @@ function App() {
       }
     }
 
-
+    // Load background color
     const savedColor = localStorage.getItem('bgColor')
     if (savedColor) {
       setCustomColor(savedColor)
     }
-  }, [])
+  }, []) // Empty dependency array means this runs once on mount
 
   const [isDragging, setIsDragging] = useState(false)
   const dragRef = useRef<{ id: number | null; startX: number; startY: number }>({
@@ -557,7 +557,8 @@ function App() {
                 alt="sticker"
                 width={sticker.size}
                 height={sticker.size}
-                priority={false}
+                priority={true}
+                unoptimized={sticker.type.startsWith('data:')}
               />
               <button
                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 

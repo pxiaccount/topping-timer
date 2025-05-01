@@ -13,7 +13,6 @@ interface Sticker {
 
 interface StickerMenuProps {
   onAddSticker: (type: string) => void;
-  stickerTypes: readonly string[];
   onImageUpload: (file: File) => void;
 }
 
@@ -30,24 +29,9 @@ interface TodoItem {
   };
 }
 
-const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes, onImageUpload }) => {
+const StickerMenu: React.FC<StickerMenuProps> = ({ onImageUpload }) => {
   return (
     <div className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white-800 p-4 flex flex-col gap-2 border-2 rounded-lg border-gray-500">
-      {stickerTypes.map(type => (
-        <button
-          key={type}
-          onClick={() => onAddSticker(type)}
-          className="w-12 h-12 hover:opacity-80"
-        >
-          <Image
-            src={`/stickers/${type}`}
-            alt={type}
-            width={48}
-            height={48}
-            priority={false}
-          />
-        </button>
-      ))}
       <label className="cursor-pointer w-12 h-12 flex items-center justify-center border-2 border-dashed border-gray-400 rounded hover:border-gray-600">
         <input
           type="file"
@@ -70,6 +54,16 @@ function App() {
   const [stickers, setStickers] = useState<Sticker[]>([]) // Initialize empty first
   const [data, setData] = useState<TodoItem[]>([]) // Initialize empty first
   const [customColor, setCustomColor] = useState("#ffffff")
+  const [showDisclaimer, setShowDisclaimer] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
+    if (hasSeenDisclaimer) {
+      setShowDisclaimer(false);
+    }
+    setIsLoading(false);
+  }, []);
 
   // Add this useEffect to load data after component mounts
   useEffect(() => {
@@ -108,6 +102,11 @@ function App() {
     }
   }, []) // Empty dependency array means this runs once on mount
 
+  const handleAcceptDisclaimer = () => {
+    localStorage.setItem('hasSeenDisclaimer', 'true');
+    setShowDisclaimer(false);
+  };
+
   const [isDragging, setIsDragging] = useState(false)
   const dragRef = useRef<{ id: number | null; startX: number; startY: number }>({
     id: null,
@@ -121,12 +120,6 @@ function App() {
     startSize: 0,
     startY: 0
   });
-
-  const STICKER_TYPES = [
-    'star.png',
-    'heart.png',
-    'smile.png',
-  ] as const
 
   const [time, setTime] = useState({
     hours: '00',
@@ -266,7 +259,8 @@ function App() {
     if (intervalRef.current === null) return
     clearInterval(intervalRef.current)
     intervalRef.current = null
-    setIsRunning(false)
+    setIsRunning(false
+    )
   }
 
   const update = () => {
@@ -383,7 +377,7 @@ function App() {
     setStickers(prev => prev.filter(sticker => sticker.id !== id))
   }
 
-  return (
+  return isLoading ? null : (
     <div
       className={`min-h-screen relative`}
       onMouseMove={(e) => {
@@ -401,6 +395,27 @@ function App() {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      {showDisclaimer && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold mb-4 text-black">Disclaimer</h2>
+            <div className="text-gray-700 mb-6 space-y-4">
+              <p>Welcome to Topping Timer! Before you begin, please note:</p>
+              <ul className="list-disc pl-5">
+                <li>This application stores all uploaded images locally in your browser&apos;s storage on your own device. We do not collect, transmit, or store any user data or images on any server.</li>
+                <li>By using this application, you acknowledge that any content you upload is your sole responsibility. We are not liable for any illegal, harmful, or unauthorized content uploaded through this tool. Use responsibly and in accordance with applicable laws and regulations.</li>
+                <li>Your data is stored locally in your browser.</li>
+              </ul>
+            </div>
+            <button
+              onClick={handleAcceptDisclaimer}
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+            >
+              I Understand, Let&apos;s Begin
+            </button>
+          </div>
+        </div>
+      )}
       <div className="absolute top-4 left-4">
         <input
           type="color"
@@ -526,7 +541,6 @@ function App() {
 
       <StickerMenu
         onAddSticker={addSticker}
-        stickerTypes={STICKER_TYPES}
         onImageUpload={(file) => {
           const reader = new FileReader();
           reader.onload = (event) => {

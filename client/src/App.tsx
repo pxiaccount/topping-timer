@@ -6,11 +6,13 @@ interface Sticker {
   type: string;
   x: number;
   y: number;
+  size: number;
 }
 
 interface StickerMenuProps {
   onAddSticker: (type: string) => void;
   stickerTypes: readonly string[];
+  onImageUpload: (file: File) => void;
 }
 
 interface TodoItem {
@@ -26,9 +28,9 @@ interface TodoItem {
   };
 }
 
-const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes }) => {
+const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes, onImageUpload }) => {
   return (
-    <div className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white-800 p-4 flex flex-col gap-2">
+    <div className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white-800 p-4 flex flex-col gap-2 border-2 rounded-lg border-gray-500">
       {stickerTypes.map(type => (
         <button
           key={type}
@@ -58,6 +60,13 @@ function App() {
     startX: 0,
     startY: 0
   })
+
+  const [isResizing, setIsResizing] = useState(false);
+  const resizeRef = useRef<{ id: number | null; startSize: number; startY: number }>({
+    id: null,
+    startSize: 0,
+    startY: 0
+  });
 
   const STICKER_TYPES = [
     'star.png',
@@ -139,6 +148,31 @@ function App() {
       ...prev,
       [name]: formattedValue
     }))
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setStickers(prev => [...prev, {
+            id: Date.now(),
+            type: event.target.result as string,
+            x: e.clientX,
+            y: e.clientY,
+            size: 48
+          }]);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   }
 
   const startTimer = () => {
@@ -262,14 +296,51 @@ function App() {
     dragRef.current.id = null
   }
 
+  const handleResizeStart = (e: React.MouseEvent, id: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    const sticker = stickers.find(s => s.id === id);
+    if (!sticker) return;
+
+    resizeRef.current = {
+      id,
+      startSize: sticker.size || 48,
+      startY: e.clientY
+    };
+  };
+
+  const handleResize = (e: React.MouseEvent) => {
+    if (!isResizing || resizeRef.current.id === null) return;
+
+    const deltaY = e.clientY - resizeRef.current.startY;
+    const newSize = Math.max(24, Math.min(200, resizeRef.current.startSize + deltaY));
+
+    setStickers(prev => prev.map(sticker => {
+      if (sticker.id === resizeRef.current.id) {
+        return {
+          ...sticker,
+          size: newSize
+        };
+      }
+      return sticker;
+    }));
+  };
+
+  const handleResizeEnd = () => {
+    setIsResizing(false);
+    resizeRef.current.id = null;
+  };
+
   const addSticker = (type: string) => {
     setStickers(prev => [...prev, {
       id: Date.now(),
       type,
       x: window.innerWidth / 2,
-      y: window.innerHeight / 2
-    }])
-  }
+      y: window.innerHeight / 2,
+      size: 48
+    }]);
+  };
 
   const deleteSticker = (id: number) => {
     setStickers(prev => prev.filter(sticker => sticker.id !== id))
@@ -278,8 +349,16 @@ function App() {
   return (
     <div
       className="min-h-screen bg-white-900 relative"
-      onMouseMove={handleStickerDrag}
-      onMouseUp={handleStickerDragEnd}
+      onMouseMove={(e) => {
+        handleStickerDrag(e);
+        handleResize(e);
+      }}
+      onMouseUp={() => {
+        handleStickerDragEnd();
+        handleResizeEnd();
+      }}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       <div className='text-center text-6xl py-10 font-bold'>Topping Timer!</div>
       <div className="max-w-4xl mx-auto p-4">
@@ -391,7 +470,19 @@ function App() {
         </div>
       </div>
 
-      <StickerMenu onAddSticker={addSticker} stickerTypes={STICKER_TYPES} />
+      <StickerMenu
+        onAddSticker={addSticker}
+        stickerTypes={STICKER_TYPES}
+        onImageUpload={(file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              addSticker(event.target.result as string);
+            }
+          };
+          reader.readAsDataURL(file);
+        }}
+      />
 
       {stickers.map(sticker => (
         <div
@@ -401,27 +492,40 @@ function App() {
             left: `${sticker.x}px`,
             top: `${sticker.y}px`,
             transform: 'translate(-50%, -50%)',
-            zIndex: isDragging && dragRef.current.id === sticker.id ? 1000 : 1
+            zIndex: isDragging && dragRef.current.id === sticker.id ? 1000 : 1,
           }}
           onMouseDown={(e) => handleStickerDragStart(e, sticker.id)}
         >
-          <img
-            src={`/stickers/${sticker.type}`}
-            alt="sticker"
-            className="w-12 h-12 select-none"
-            draggable={false}
-          />
-          <button
-            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 
-                       flex items-center justify-center text-xs 
-                       opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteSticker(sticker.id);
-            }}
-          >
-            ×
-          </button>
+          <div className="relative border-2 border-transparent hover:border-gray-500 transition-colors">
+            <img
+              src={sticker.type.startsWith('data:') ? sticker.type : `/stickers/${sticker.type}`}
+              alt="sticker"
+              className="select-none object-contain"
+              style={{
+                width: `${sticker.size}px`,
+                height: `${sticker.size}px`
+              }}
+              draggable={false}
+            />
+            <button
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 
+                 flex items-center justify-center text-xs 
+                 opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteSticker(sticker.id);
+              }}
+            >
+              ×
+            </button>
+            <div
+              className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize
+                 opacity-0 group-hover:opacity-100 transition-opacity"
+              onMouseDown={(e) => handleResizeStart(e, sticker.id)}
+            >
+              <div className="w-2 h-2 bg-white rounded-full transform translate-x-1 translate-y-1" />
+            </div>
+          </div>
         </div>
       ))}
     </div>

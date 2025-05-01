@@ -2,4 +2,4 @@
 
 🍰 A sweet way to track your time!
 
-Last update: 30 April 2025
+Last update: 1 May 2025

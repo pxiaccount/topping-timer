@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import './globals.css'
 import { getBasePath } from './utils/paths';
+import Disclaimer from './Disclaimer';
 
 interface Sticker {
   id: number;
@@ -30,7 +31,6 @@ interface TodoItem {
   };
 }
 
-
 const StickerMenu: React.FC<StickerMenuProps> = ({ onImageUpload }) => {
   return (
     <div className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white-800 p-4 flex flex-col gap-2 border-2 rounded-lg border-gray-500">
@@ -54,11 +54,24 @@ const StickerMenu: React.FC<StickerMenuProps> = ({ onImageUpload }) => {
 };
 
 function App() {
-  const [stickers, setStickers] = useState<Sticker[]>([]) // Initialize empty first
-  const [data, setData] = useState<TodoItem[]>([]) // Initialize empty first
+  const [stickers, setStickers] = useState<Sticker[]>([])
+  const [data, setData] = useState<TodoItem[]>([])
   const [customColor, setCustomColor] = useState("#ffffff")
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasShownQuotaError, setHasShownQuotaError] = useState(false);
+
+  const safeSetItem = (key: string, value: string) => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (error) {
+      if (error instanceof Error && !hasShownQuotaError) {
+        setHasShownQuotaError(true);
+        alert('Storage quota exceeded. Some data may not be saved. Try removing unused items or images.');
+        console.error('localStorage quota exceeded:', error);
+      }
+    }
+  }
 
   useEffect(() => {
     const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
@@ -68,9 +81,9 @@ function App() {
     setIsLoading(false);
   }, []);
 
-  // Add this useEffect to load data after component mounts
+
   useEffect(() => {
-    // Load stickers
+
     const savedStickers = localStorage.getItem('stickers')
     if (savedStickers) {
       try {
@@ -80,7 +93,7 @@ function App() {
       }
     }
 
-    // Load todos
+
     const savedTodos = localStorage.getItem('todos')
     if (savedTodos) {
       try {
@@ -98,16 +111,20 @@ function App() {
       }
     }
 
-    // Load background color
+
     const savedColor = localStorage.getItem('bgColor')
     if (savedColor) {
       setCustomColor(savedColor)
     }
-  }, []) // Empty dependency array means this runs once on mount
+  }, [])
 
   const handleAcceptDisclaimer = () => {
-    localStorage.setItem('hasSeenDisclaimer', 'true');
+    safeSetItem('hasSeenDisclaimer', 'true');
     setShowDisclaimer(false);
+  };
+
+  const handleShowDisclaimer = () => {
+    setShowDisclaimer(true);
   };
 
   const [isDragging, setIsDragging] = useState(false)
@@ -157,19 +174,15 @@ function App() {
   }, [popup]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('todos', JSON.stringify(data))
-    } catch (error) {
-      console.error('Error saving todos:', error)
-    }
+    safeSetItem('todos', JSON.stringify(data))
   }, [data])
 
   useEffect(() => {
-    localStorage.setItem('stickers', JSON.stringify(stickers))
+    safeSetItem('stickers', JSON.stringify(stickers))
   }, [stickers])
 
   useEffect(() => {
-    localStorage.setItem('bgColor', customColor)
+    safeSetItem('bgColor', customColor)
   }, [customColor])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -408,6 +421,7 @@ function App() {
                 <li>This application stores all uploaded images locally in your browser&apos;s storage on your own device. We do not collect, transmit, or store any user data or images on any server.</li>
                 <li>By using this application, you acknowledge that any content you upload is your sole responsibility. We are not liable for any illegal, harmful, or unauthorized content uploaded through this tool. Use responsibly and in accordance with applicable laws and regulations.</li>
                 <li>Your data is stored locally in your browser.</li>
+                <li>If your browser’s localStorage quota is exceeded, we are not responsible for any loss of uploaded images.</li>
               </ul>
             </div>
             <button
@@ -570,7 +584,7 @@ function App() {
           >
             <div className="relative border-2 border-transparent hover:border-gray-500 transition-colors">
               <Image
-                src={sticker.type.startsWith('data:') ? sticker.type : `${getBasePath()}/stickers/${sticker.type}`} // Add basePath here
+                src={sticker.type.startsWith('data:') ? sticker.type : `${getBasePath()}/stickers/${sticker.type}`}
                 alt="sticker"
                 width={sticker.size}
                 height={sticker.size}
@@ -599,6 +613,16 @@ function App() {
           </div>
         ))
       }
+      <div className='pt-70  text-center'>
+        <a href="https://github.com/pxiaccount/topping-timer" className='mx-2'>GitHub</a>
+        <button
+          onClick={handleShowDisclaimer}
+          className='mx-2 text-current hover:underline'
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          Disclaimer
+        </button>
+      </div>
     </div >
   )
 }

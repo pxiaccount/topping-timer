@@ -108,6 +108,7 @@ function App() {
   const [popup, setPopup] = useState<number | null>(null)
   const [date, setDate] = useState("")
   const [desc, setDesc] = useState("")
+  const [customColor, setCustomColor] = useState("#ffffff")
 
   useEffect(() => {
     if (isFinished) {
@@ -138,6 +139,17 @@ function App() {
   useEffect(() => {
     localStorage.setItem('stickers', JSON.stringify(stickers))
   }, [stickers])
+
+  useEffect(() => {
+    const savedColor = localStorage.getItem('bgColor')
+    if (savedColor) {
+      setCustomColor(savedColor)
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem('bgColor', customColor)
+  }, [customColor])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -348,10 +360,14 @@ function App() {
 
   return (
     <div
-      className="min-h-screen bg-white-900 relative"
+      className={`min-h-screen relative`}
       onMouseMove={(e) => {
         handleStickerDrag(e);
         handleResize(e);
+      }}
+      style={{
+        backgroundColor: customColor,
+        color: customColor === '#ffffff' ? '#000000' : '#ffffff'
       }}
       onMouseUp={() => {
         handleStickerDragEnd();
@@ -360,6 +376,15 @@ function App() {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
+      <div className="absolute top-4 left-4">
+        <input
+          type="color"
+          value={customColor}
+          onChange={(e) => setCustomColor(e.target.value)}
+          className="w-8 h-8 rounded cursor-pointer"
+          title="Change background color"
+        />
+      </div>
       <div className='text-center text-6xl py-10 font-bold'>Topping Timer!</div>
       <div className="max-w-4xl mx-auto p-4">
         <div className="bg-white-800 p-8 mb-8">
@@ -417,6 +442,10 @@ function App() {
               className="bg-white-700  px-4 py-2 rounded-lg flex-1 mr-4"
               type="text"
               value={text}
+              style={{
+                backgroundColor: customColor,
+                color: customColor === '#ffffff' ? '#000000' : '#ffffff'
+              }}
               placeholder="Add a new task..."
               onChange={(e) => setText(e.target.value)}
             />
@@ -484,51 +513,53 @@ function App() {
         }}
       />
 
-      {stickers.map(sticker => (
-        <div
-          key={sticker.id}
-          className="absolute cursor-move group"
-          style={{
-            left: `${sticker.x}px`,
-            top: `${sticker.y}px`,
-            transform: 'translate(-50%, -50%)',
-            zIndex: isDragging && dragRef.current.id === sticker.id ? 1000 : 1,
-          }}
-          onMouseDown={(e) => handleStickerDragStart(e, sticker.id)}
-        >
-          <div className="relative border-2 border-transparent hover:border-gray-500 transition-colors">
-            <img
-              src={sticker.type.startsWith('data:') ? sticker.type : `/stickers/${sticker.type}`}
-              alt="sticker"
-              className="select-none object-contain"
-              style={{
-                width: `${sticker.size}px`,
-                height: `${sticker.size}px`
-              }}
-              draggable={false}
-            />
-            <button
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 
+      {
+        stickers.map(sticker => (
+          <div
+            key={sticker.id}
+            className="absolute cursor-move group"
+            style={{
+              left: `${sticker.x}px`,
+              top: `${sticker.y}px`,
+              transform: 'translate(-50%, -50%)',
+              zIndex: isDragging && dragRef.current.id === sticker.id ? 1000 : 1,
+            }}
+            onMouseDown={(e) => handleStickerDragStart(e, sticker.id)}
+          >
+            <div className="relative border-2 border-transparent hover:border-gray-500 transition-colors">
+              <img
+                src={sticker.type.startsWith('data:') ? sticker.type : `/stickers/${sticker.type}`}
+                alt="sticker"
+                className="select-none object-contain"
+                style={{
+                  width: `${sticker.size}px`,
+                  height: `${sticker.size}px`
+                }}
+                draggable={false}
+              />
+              <button
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 
                  flex items-center justify-center text-xs 
                  opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteSticker(sticker.id);
-              }}
-            >
-              ×
-            </button>
-            <div
-              className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteSticker(sticker.id);
+                }}
+              >
+                ×
+              </button>
+              <div
+                className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize
                  opacity-0 group-hover:opacity-100 transition-opacity"
-              onMouseDown={(e) => handleResizeStart(e, sticker.id)}
-            >
-              <div className="w-2 h-2 bg-white rounded-full transform translate-x-1 translate-y-1" />
+                onMouseDown={(e) => handleResizeStart(e, sticker.id)}
+              >
+                <div className="w-2 h-2 bg-white rounded-full transform translate-x-1 translate-y-1" />
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))
+      }
+    </div >
   )
 }
 

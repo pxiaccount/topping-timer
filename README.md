@@ -1,15 +1,11 @@
 # Topping Timer
 
+![Page 3](https://github.com/user-attachments/assets/aa93d0a0-5dd2-485a-8a1e-89ec9936e586)
+
+### About
 🍰 A sweet way to track your time!
 
 ---
-
-### 🧁 What’s Topping Timer?
-
-Topping Timer is a time tracker built with Next.js and TypeScript. It's designed to be simple, intuitive, and—most importantly—fun.
-
----
-
 ### 🚀 Features
 
 - **Customizable themes**: Choose from a variety of styles to match your vibe.
@@ -25,6 +21,11 @@ cd topping-timer
 npm install
 npm run dev
 ```
+---
+### Credits
+JS Framework - [Next.js](https://nextjs.org/) <br />
+CSS Framework - [Tailwind CSS](https://tailwindcss.com/) <br />
+Font (Used in website & banner) - [Schoolbell](https://fonts.google.com/specimen/Schoolbell) <br />
 
 ---
 

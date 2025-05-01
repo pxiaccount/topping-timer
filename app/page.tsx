@@ -181,11 +181,12 @@ function App() {
 
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
+      reader.onload = (event: ProgressEvent<FileReader>) => {
+        const result = event.target?.result;
+        if (result && typeof result === 'string') {
           setStickers(prev => [...prev, {
             id: Date.now(),
-            type: event.target.result as string,
+            type: result,
             x: e.clientX,
             y: e.clientY,
             size: 48

@@ -1,6 +1,6 @@
 # Topping Timer
 
-![Page 3](https://github.com/user-attachments/assets/aa93d0a0-5dd2-485a-8a1e-89ec9936e586)
+![Page 3](https://github.com/user-attachments/assets/a6d06132-31e4-495d-b12b-88edf6c600cc)
 
 ### About
 🍰 A sweet way to track your time!

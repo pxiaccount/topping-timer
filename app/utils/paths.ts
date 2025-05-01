@@ -1,5 +1,3 @@
-export function getBasePath(): string {
-    return process.env.NODE_ENV === 'production'
-        ? process.env.NEXT_PUBLIC_BASE_PATH || ''
-        : '';
-}
+// utils/paths.ts
+export const getBasePath = () =>
+    process.env.NODE_ENV === 'production' ? '/pxiaccount/topping-timer/blob/main/public/stickers' : '';

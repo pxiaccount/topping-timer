@@ -1,10 +1,13 @@
-import { NextConfig } from 'next';
+import type { NextConfig } from 'next';
+
+const isProd = process.env.NODE_ENV === 'production';
 
 const nextConfig: NextConfig = {
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  reactStrictMode: true,
+  trailingSlash: true,
+  basePath: isProd ? '/pxiaccount/topping-timer/blob/main/public/stickers' : '',
   images: {
     unoptimized: true,
-    domains: [], // Add any external domains here if needed
   }
 };
 

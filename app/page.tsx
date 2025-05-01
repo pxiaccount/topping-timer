@@ -30,30 +30,11 @@ interface TodoItem {
   };
 }
 
-const STICKER_TYPES = [
-  'heart.png',
-  'smile.png',
-  'star.png',
-];
 
-const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, onImageUpload }) => {
+const StickerMenu: React.FC<StickerMenuProps> = ({ onImageUpload }) => {
   return (
     <div className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white-800 p-4 flex flex-col gap-2 border-2 rounded-lg border-gray-500">
-      {STICKER_TYPES.map((type) => (
-        <button
-          key={type}
-          className="w-12 h-12 flex items-center justify-center hover:bg-gray-100 rounded"
-          onClick={() => onAddSticker(type)}
-        >
-          <Image
-            src={`${getBasePath()}/stickers/${type}`} // Add basePath here
-            alt={type}
-            width={32}
-            height={32}
-            priority={true}
-          />
-        </button>
-      ))}
+
       <label className="cursor-pointer w-12 h-12 flex items-center justify-center border-2 border-dashed border-gray-400 rounded hover:border-gray-600">
         <input
           type="file"

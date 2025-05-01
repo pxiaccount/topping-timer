@@ -30,6 +30,20 @@ interface TodoItem {
   };
 }
 
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
+
+const validateImage = (file: File) => {
+  if (!file.type.startsWith('image/')) {
+    alert('Only image files are allowed');
+    return false;
+  }
+  if (file.size > MAX_IMAGE_SIZE) {
+    alert('Image size should be less than 5MB');
+    return false;
+  }
+  return true;
+};
+
 const StickerMenu: React.FC<StickerMenuProps> = ({ onImageUpload }) => {
   return (
     <div className="fixed right-4 top-1/2 transform -translate-y-1/2 bg-white-800 p-4 flex flex-col gap-2 border-2 rounded-lg border-gray-500">
@@ -41,7 +55,7 @@ const StickerMenu: React.FC<StickerMenuProps> = ({ onImageUpload }) => {
           className="hidden"
           onChange={(e) => {
             const file = e.target.files?.[0];
-            if (file) {
+            if (file && validateImage(file)) {
               onImageUpload(file);
             }
           }}
@@ -253,7 +267,7 @@ function App() {
     e.preventDefault();
     const file = e.dataTransfer.files[0];
 
-    if (file && file.type.startsWith('image/')) {
+    if (file && validateImage(file)) {
       const reader = new FileReader();
       reader.onload = (event: ProgressEvent<FileReader>) => {
         const result = event.target?.result;
@@ -489,9 +503,9 @@ function App() {
             <div className="text-gray-700 mb-6 space-y-4">
               <p>Topping Timer was created using:</p>
               <ul className="list-disc pl-5">
-                <li>JS Framework - <a href="https://nextjs.org/" target='_blank' className='text-blue-500 hover:underline'>Next.js</a></li>
-                <li>CSS Framework - <a href="https://tailwindcss.com/" target='_blank' className='text-blue-500 hover:underline'>Tailwind CSS</a></li>
-                <li>Font - <a href='https://fonts.google.com/specimen/Schoolbell' target='_blank' className='text-blue-500 hover:underline'>Schoolbell</a></li>
+                <li>JS Framework - <a href="https://nextjs.org/" target='_blank' rel="noopener noreferrer" className='text-blue-500 hover:underline'>Next.js</a></li>
+                <li>CSS Framework - <a href="https://tailwindcss.com/" target='_blank' rel="noopener noreferrer" className='text-blue-500 hover:underline'>Tailwind CSS</a></li>
+                <li>Font - <a href='https://fonts.google.com/specimen/Schoolbell' target='_blank' rel="noopener noreferrer" className='text-blue-500 hover:underline'>Schoolbell</a></li>
               </ul>
               <p className="mt-4">Project created by <a href="https://github.com/pxiaccount" target='_blank' className="text-blue-500 hover:underline">pxiaccount</a></p>
             </div>
@@ -639,13 +653,15 @@ function App() {
       <StickerMenu
         onAddSticker={addSticker}
         onImageUpload={(file) => {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            if (event.target?.result) {
-              addSticker(event.target.result as string);
-            }
-          };
-          reader.readAsDataURL(file);
+          if (validateImage(file)) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              if (event.target?.result) {
+                addSticker(event.target.result as string);
+              }
+            };
+            reader.readAsDataURL(file);
+          }
         }}
       />
 

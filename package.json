@@ -5,8 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "start": "npx serve@latest out",
+    "lint": "next lint",
+    "deploy": "next build && touch out/.nojekyll"
   },
   "dependencies": {
     "next": "15.3.1",

@@ -40,7 +40,7 @@ const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, stickerTypes, o
           className="w-12 h-12 hover:opacity-80"
         >
           <Image
-            src={`/stickers/${type}`}
+            src={`${process.env.NODE_ENV === 'production' ? '/topping-timer' : ''}/stickers/${type}`}
             alt={type}
             width={48}
             height={48}

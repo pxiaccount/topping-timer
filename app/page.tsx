@@ -60,6 +60,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasShownQuotaError, setHasShownQuotaError] = useState(false);
   const [showCredits, setShowCredits] = useState(false)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   const safeSetItem = useCallback((key: string, value: string) => {
     try {
@@ -73,14 +74,52 @@ function App() {
     }
   }, [hasShownQuotaError]);
 
+  const isNotificationSupported = () => {
+    return 'Notification' in window;
+  };
+
+  const requestNotificationPermission = async () => {
+    if (!isNotificationSupported()) {
+      alert('Notifications are not supported in your browser');
+      return;
+    }
+
+
+    if (notificationsEnabled) {
+      setNotificationsEnabled(false);
+      safeSetItem('notificationsEnabled', 'false');
+      return;
+    }
+
+
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === "granted") {
+        setNotificationsEnabled(true);
+        safeSetItem('notificationsEnabled', 'true');
+      } else {
+        setNotificationsEnabled(false);
+        safeSetItem('notificationsEnabled', 'false');
+        alert('Notification permission denied');
+      }
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      alert('Failed to enable notifications');
+    }
+  };
+
   useEffect(() => {
     const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
     if (hasSeenDisclaimer) {
       setShowDisclaimer(false);
     }
     setIsLoading(false);
-  }, []);
 
+    const savedNotificationSetting = localStorage.getItem('notificationsEnabled');
+    if (savedNotificationSetting === 'true' && Notification.permission === "granted") {
+      setNotificationsEnabled(true);
+    }
+  }, []);
 
   useEffect(() => {
 
@@ -161,10 +200,16 @@ function App() {
 
   useEffect(() => {
     if (isFinished) {
-      alert("Time's up")
-      setIsFinished(false)
+      if (notificationsEnabled) {
+        new Notification("Time's Up!", {
+          body: "Your timer has finished!",
+        });
+      } else {
+        alert("Time's up");
+      }
+      setIsFinished(false);
     }
-  }, [isFinished])
+  }, [isFinished, notificationsEnabled]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -468,6 +513,15 @@ function App() {
           title="Change background color"
         />
       </div>
+      <div className="absolute top-4 right-4 flex items-center">
+        <button
+          onClick={requestNotificationPermission}
+          className={`px-3 py-1 rounded ${notificationsEnabled ? 'bg-green-500' : 'bg-gray-500'} text-white text-sm flex items-center`}
+          title="Toggle notifications"
+        >
+          {notificationsEnabled ? 'Notifications On' : 'Notifications Off'}
+        </button>
+      </div>
       <div className='text-center text-6xl py-10 font-bold'>Topping Timer!</div>
       <div className="max-w-4xl mx-auto p-4">
         <div className="bg-white-800 p-8 mb-8">
@@ -640,7 +694,14 @@ function App() {
         ))
       }
       <div className='pt-70  text-center'>
-        <a href="https://github.com/pxiaccount/topping-timer" target='_blank' className='mx-2 hover:underline'>GitHub</a>
+        <a
+          href="https://github.com/pxiaccount/topping-timer"
+          target='_blank'
+          rel="noopener noreferrer"
+          className='mx-2 hover:underline'
+        >
+          GitHub
+        </a>
         <button
           onClick={handleShowDisclaimer}
           className='mx-2 text-current hover:underline'

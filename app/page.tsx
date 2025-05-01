@@ -1,9 +1,8 @@
 "use client"
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import './globals.css'
 import { getBasePath } from './utils/paths';
-import Disclaimer from './Disclaimer';
 
 interface Sticker {
   id: number;
@@ -60,8 +59,9 @@ function App() {
   const [showDisclaimer, setShowDisclaimer] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasShownQuotaError, setHasShownQuotaError] = useState(false);
+  const [showCredits, setShowCredits] = useState(false)
 
-  const safeSetItem = (key: string, value: string) => {
+  const safeSetItem = useCallback((key: string, value: string) => {
     try {
       localStorage.setItem(key, value);
     } catch (error) {
@@ -71,7 +71,7 @@ function App() {
         console.error('localStorage quota exceeded:', error);
       }
     }
-  }
+  }, [hasShownQuotaError]);
 
   useEffect(() => {
     const hasSeenDisclaimer = localStorage.getItem('hasSeenDisclaimer');
@@ -127,6 +127,10 @@ function App() {
     setShowDisclaimer(true);
   };
 
+  const handleCloseCredits = () => {
+    setShowCredits(false);
+  };
+
   const [isDragging, setIsDragging] = useState(false)
   const dragRef = useRef<{ id: number | null; startX: number; startY: number }>({
     id: null,
@@ -175,15 +179,15 @@ function App() {
 
   useEffect(() => {
     safeSetItem('todos', JSON.stringify(data))
-  }, [data])
+  }, [data, safeSetItem])
 
   useEffect(() => {
     safeSetItem('stickers', JSON.stringify(stickers))
-  }, [stickers])
+  }, [stickers, safeSetItem])
 
   useEffect(() => {
     safeSetItem('bgColor', customColor)
-  }, [customColor])
+  }, [customColor, safeSetItem])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -421,14 +425,36 @@ function App() {
                 <li>This application stores all uploaded images locally in your browser&apos;s storage on your own device. We do not collect, transmit, or store any user data or images on any server.</li>
                 <li>By using this application, you acknowledge that any content you upload is your sole responsibility. We are not liable for any illegal, harmful, or unauthorized content uploaded through this tool. Use responsibly and in accordance with applicable laws and regulations.</li>
                 <li>Your data is stored locally in your browser.</li>
-                <li>If your browser’s localStorage quota is exceeded, we are not responsible for any loss of uploaded images.</li>
+                <li>The maximum localStorage is ~5 MB. If your browser’s localStorage quota is exceeded, we are not responsible for any loss of uploaded images.</li>
               </ul>
             </div>
             <button
               onClick={handleAcceptDisclaimer}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors hover:cursor-pointer"
             >
               I Understand, Let&apos;s Begin
+            </button>
+          </div>
+        </div>
+      )}
+      {showCredits && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-8 max-w-2xl mx-auto">
+            <h2 className="text-2xl font-bold mb-4 text-black">Credits</h2>
+            <div className="text-gray-700 mb-6 space-y-4">
+              <p>Topping Timer was created using:</p>
+              <ul className="list-disc pl-5">
+                <li>JS Framework - <a href="https://nextjs.org/" target='_blank' className='text-blue-500 hover:underline'>Next.js</a></li>
+                <li>CSS Framework - <a href="https://tailwindcss.com/" target='_blank' className='text-blue-500 hover:underline'>Tailwind CSS</a></li>
+                <li>Font - <a href='https://fonts.google.com/specimen/Schoolbell' target='_blank' className='text-blue-500 hover:underline'>Schoolbell</a></li>
+              </ul>
+              <p className="mt-4">Project created by <a href="https://github.com/pxiaccount" target='_blank' className="text-blue-500 hover:underline">pxiaccount</a></p>
+            </div>
+            <button
+              onClick={handleCloseCredits}
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors hover:cursor-pointer"
+            >
+              Close
             </button>
           </div>
         </div>
@@ -614,13 +640,20 @@ function App() {
         ))
       }
       <div className='pt-70  text-center'>
-        <a href="https://github.com/pxiaccount/topping-timer" className='mx-2'>GitHub</a>
+        <a href="https://github.com/pxiaccount/topping-timer" target='_blank' className='mx-2 hover:underline'>GitHub</a>
         <button
           onClick={handleShowDisclaimer}
           className='mx-2 text-current hover:underline'
           style={{ background: 'none', border: 'none', cursor: 'pointer' }}
         >
           Disclaimer
+        </button>
+        <button
+          onClick={() => setShowCredits(true)}
+          className='mx-2 text-current hover:underline'
+          style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          Credits
         </button>
       </div>
     </div >

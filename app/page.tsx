@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import './globals.css'
+import { getBasePath } from './utils/paths';
 
 interface Sticker {
   id: number;
@@ -33,7 +34,6 @@ const STICKER_TYPES = [
   'heart.png',
   'smile.png',
   'star.png',
-  // Add more sticker filenames from your public/stickers folder
 ];
 
 const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, onImageUpload }) => {
@@ -46,7 +46,7 @@ const StickerMenu: React.FC<StickerMenuProps> = ({ onAddSticker, onImageUpload }
           onClick={() => onAddSticker(type)}
         >
           <Image
-            src={`/stickers/${type}`}
+            src={`${getBasePath()}/stickers/${type}`} // Add basePath here
             alt={type}
             width={32}
             height={32}
@@ -589,7 +589,7 @@ function App() {
           >
             <div className="relative border-2 border-transparent hover:border-gray-500 transition-colors">
               <Image
-                src={sticker.type.startsWith('data:') ? sticker.type : `/stickers/${sticker.type}`}
+                src={sticker.type.startsWith('data:') ? sticker.type : `${getBasePath()}/stickers/${sticker.type}`}
                 alt="sticker"
                 width={sticker.size}
                 height={sticker.size}
